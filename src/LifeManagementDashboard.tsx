@@ -128,8 +128,6 @@ export default function LifeManagementDashboard() {
     return () => clearInterval(t);
   }, []);
 
-  const [balance, setBalance] = useState("");
-
   // フォーマッタ
   const formatCurrency = (amount) =>
     new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY', minimumFractionDigits: 0 }).format(amount);
@@ -234,24 +232,6 @@ export default function LifeManagementDashboard() {
                   className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
                 />
               </div>
-
-            {/* 入力欄追加 */}
-              <div className="mt-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  残高入力
-                </label>
-                <input
-                  type="text"
-                  value={balance}
-                  onChange={(e) => setBalance(e.target.value)}
-                  placeholder="例: 150000"
-                  className="w-full border rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  現在の入力値: {balance || "未入力"}
-                </p>
-              </div>
-
             </section>
           </div>
 
