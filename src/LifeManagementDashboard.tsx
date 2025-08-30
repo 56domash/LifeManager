@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import GridLayout from 'react-grid-layout';
 import {
-  Wallet, TrendingUp, ArrowUp, Newspaper, Heart, Moon, Flame, Apple, Scale, Eye, Clock,
+  Wallet, TrendingUp, ArrowUp, ArrowDown, Newspaper, Heart, Moon, Flame, Apple, Scale, Eye, Clock,
   Calendar, MapPin, Cloud, Sun, CloudRain, Target, Book, Coffee, Car, ShoppingCart, Star,
-  MessageCircle, Send, Save, RotateCcw, Plus, Trash, Edit, Check
+  MessageCircle, Send, Save, RotateCcw, Plus, Trash, Edit, Check, ChevronDown, ChevronUp, Lock, Unlock
 } from 'lucide-react';
 import { Responsive, WidthProvider } from 'react-grid-layout';
-import { Line } from 'react-chartjs-2';
+import { Line, Pie } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -16,6 +16,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  ArcElement
 } from 'chart.js';
 
 ChartJS.register(
@@ -25,7 +26,8 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  ArcElement
 );
 
 // 時刻表示を分離したコンポーネント
@@ -87,10 +89,10 @@ export default function LifeManagementDashboard() {
       { i: 'investment', x: 3, y: 0, w: 3, h: 5, minW: 1, minH: 1 },
       { i: 'health', x: 6, y: 0, w: 2, h: 2, minW: 1, minH: 1 },
       { i: 'news', x: 8, y: 0, w: 4, h: 5, minW: 1, minH: 1 },
-      { i: 'ai-chat', x: 8, y: 5, w: 4, h: 2, minW: 1, minH: 1 },
       { i: 'reading', x: 0, y: 4, w: 6, h: 3, minW: 1, minH: 1 },
       { i: 'weather', x: 6, y: 2, w: 2, h: 2, minW: 1, minH: 1 },
       { i: 'sticky-memo', x: 6, y: 4, w: 2, h: 2, minW: 1, minH: 1},
+      { i: 'ai-chat', x: 8, y: 5, w: 4, h: 2, minW: 1, minH: 1 }, // AIチャットをカードとして追加
     ],
     // ここに md, sm などの小さい画面用のレイアウトも追加できます
     md: [
@@ -100,8 +102,8 @@ export default function LifeManagementDashboard() {
       { i: 'health', x: 0, y: 6, w: 5, h: 2 },
       { i: 'weather', x: 5, y: 6, w: 5, h: 2 },
       { i: 'reading', x: 0, y: 8, w: 5, h: 3 },
-      { i: 'ai-chat', x: 5, y: 8, w: 5, h: 2 },
       { i: 'sticky-memo', x: 0, y: 11, w: 5, h: 2},
+      { i: 'ai-chat', x: 5, y: 8, w: 5, h: 2 }, // AIチャットをカードとして追加
     ],
     sm: [
       { i: 'finance', x: 0, y: 0, w: 6, h: 4 },
@@ -110,8 +112,8 @@ export default function LifeManagementDashboard() {
       { i: 'health', x: 0, y: 11, w: 6, h: 2 },
       { i: 'weather', x: 0, y: 13, w: 6, h: 2 },
       { i: 'reading', x: 0, y: 15, w: 6, h: 3 },
-      { i: 'ai-chat', x: 0, y: 18, w: 6, h: 2 },
       { i: 'sticky-memo', x: 0, y: 20, w: 6, h: 2},
+      { i: 'ai-chat', x: 0, y: 18, w: 6, h: 2 }, // AIチャットをカードとして追加
     ],
   };
 
@@ -126,6 +128,9 @@ export default function LifeManagementDashboard() {
   };
 
   const [layouts, setLayouts] = useState(getSavedLayouts());
+  const [showFinanceInput, setShowFinanceInput] = useState(true);
+  const [showReadingInput, setShowReadingInput] = useState(true);
+  const [isLayoutFixed, setIsLayoutFixed] = useState(false);
 
   const onLayoutChange = (newLayout, newLayouts) => {
     setLayouts(newLayouts);
@@ -281,17 +286,18 @@ export default function LifeManagementDashboard() {
     dailyChange: 45000,
     dailyChangePercent: 1.87,
     stocks: [
-      { symbol: 'NVDA', name: 'エヌビディア', change: 8.5, price: 125.30 },
-      { symbol: '7203', name: 'トヨタ自動車', change: 2.1, price: 2890 },
-      { symbol: 'AAPL', name: 'アップル', change: -1.2, price: 189.50 },
-      { symbol: '6758', name: 'ソニーグループ', change: 3.4, price: 13250 }
+      { symbol: 'NVDA', name: 'エヌビディア', price: 125.30, dailyChange: 1.25, dailyChangePercent: 1.01 },
+      { symbol: '7203', name: 'トヨタ自動車', price: 2890, dailyChange: 25, dailyChangePercent: 0.87 },
+      { symbol: 'AAPL', name: 'アップル', price: 189.50, dailyChange: -2.10, dailyChangePercent: -1.10 },
+      { symbol: '6758', name: 'ソニーグループ', price: 13250, dailyChange: 150, dailyChangePercent: 1.14 }
     ],
     investmentTrusts: [
-      { name: 'eMAXIS Slim 全世界株式', change: 1.5, price: 23500 },
-      { name: 'S&P500インデックスファンド', change: -0.5, price: 42100 }
-    ]
+      { name: 'eMAXIS Slim 全世界株式', value: 1200000, dailyChange: 15000, dailyChangePercent: 1.26 },
+      { name: 'S&P500インデックスファンド', value: 750000, dailyChange: -5000, dailyChangePercent: -0.66 }
+    ],
+    cash: 500000
   });
-  const [activeInvestmentTab, setActiveInvestmentTab] = useState('stocks');
+  const [activeInvestmentTab, setActiveInvestmentTab] = useState('summary');
 
   // ダミーの関連ニュースデータ
   const [relatedNews] = useState([
@@ -338,13 +344,6 @@ export default function LifeManagementDashboard() {
   
   const netWorth = financeData.balance + financeData.monthlyIncome - financeData.monthlyExpense;
   const expensePercentage = (financeData.monthlyExpense / financeData.budget) * 100;
-
-  // 動的にウィジェットのサイズを取得
-  const currentLayout = layouts['lg'] || [];
-  const financeWidget = currentLayout.find(item => item.i === 'finance');
-  const newsWidget = currentLayout.find(item => item.i === 'news');
-  const isFinanceSmall = financeWidget ? financeWidget.w <= 2 : false;
-  const isNewsWide = newsWidget ? newsWidget.w >= 4 : false;
 
   const handleAddExpense = (e) => {
     e.preventDefault();
@@ -451,15 +450,72 @@ export default function LifeManagementDashboard() {
         }
     }
   };
-
+  
+  // 投資ポートフォリオの円グラフデータ
+  const investmentPortfolioData = {
+    labels: ['個別株', '投資信託', '現金'],
+    datasets: [
+        {
+            data: [
+                investmentData.stocks.reduce((sum, s) => sum + (s.price * (s.dailyChangePercent / 100 + 1)), 0),
+                investmentData.investmentTrusts.reduce((sum, f) => sum + f.value, 0),
+                investmentData.cash
+            ],
+            backgroundColor: ['#4299e1', '#667eea', '#ecc94b'],
+            hoverBackgroundColor: ['#3182ce', '#5a67d8', '#d69e2e'],
+            borderColor: '#fff',
+            borderWidth: 2,
+        }
+    ]
+  };
+  const pieOptions = {
+    responsive: true,
+    plugins: {
+        legend: {
+            position: 'right',
+            labels: {
+                boxWidth: 20
+            }
+        },
+        tooltip: {
+            callbacks: {
+                label: function(context) {
+                    let label = context.label || '';
+                    if (label) {
+                        label += ': ';
+                    }
+                    if (context.parsed !== null) {
+                        label += new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(context.parsed);
+                    }
+                    return label;
+                }
+            }
+        },
+        title: {
+            display: true,
+            text: '資産配分',
+            font: {
+                size: 16
+            },
+            color: 'rgb(55, 65, 81)'
+        }
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 w-full">
       {/* ヘッダーは新しいコンポーネントとして分離 */}
       <CurrentTimeDisplay />
 
-      {/* 保存・リセットボタンを追加 */}
+      {/* 保存・リセット・固定ボタンを追加 */}
       <div className="flex justify-end space-x-2 mb-4">
+        <button
+          onClick={() => setIsLayoutFixed(!isLayoutFixed)}
+          className={`flex items-center space-x-2 text-white text-base py-2 px-4 rounded-full transition-colors shadow-md ${isLayoutFixed ? 'bg-orange-500 hover:bg-orange-600' : 'bg-gray-500 hover:bg-gray-600'}`}
+        >
+          {isLayoutFixed ? <Lock size={18}/> : <Unlock size={18}/>}
+          <span>{isLayoutFixed ? 'レイアウトを固定中' : 'レイアウトを編集'}</span>
+        </button>
         <button 
           onClick={saveLayout} 
           className="flex items-center space-x-2 bg-blue-500 text-white text-base py-2 px-4 rounded-full hover:bg-blue-600 transition-colors shadow-md"
@@ -481,8 +537,8 @@ export default function LifeManagementDashboard() {
         breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
         cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
         rowHeight={150}
-        isDraggable={true}
-        isResizable={true}
+        isDraggable={!isLayoutFixed}
+        isResizable={!isLayoutFixed}
       >
         {/* --- 家計簿管理 --- */}
         <div key="finance" className="bg-white rounded-2xl p-6 shadow-lg border flex flex-col">
@@ -505,7 +561,7 @@ export default function LifeManagementDashboard() {
               </div>
           </div>
           <h3 className="text-lg font-semibold mt-4 mb-2 text-gray-700">支出内訳</h3>
-          <ul className="space-y-2 text-sm overflow-y-auto max-h-40">
+          <ul className="flex-grow space-y-2 text-sm overflow-y-auto max-h-40">
               {financeData.expenses.map((exp, index) => (
                   <li key={index} className="flex justify-between items-center p-2 rounded-md bg-gray-50">
                       <span>{exp.category}</span>
@@ -513,46 +569,59 @@ export default function LifeManagementDashboard() {
                   </li>
               ))}
           </ul>
-          <h3 className="text-lg font-semibold mt-4 mb-2 text-gray-700">支出入力</h3>
-          <form onSubmit={handleAddExpense} className="flex flex-col space-y-2">
-              <input
-                  type="text"
-                  value={newExpense.category}
-                  onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
-                  placeholder="項目名（例：食費）"
-                  className="p-2 border rounded-md text-sm"
-                  required
-              />
-              <div className="flex items-center space-x-2">
-                <input
-                    type="number"
-                    value={newExpense.amount}
-                    onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
-                    placeholder="金額"
-                    className="p-2 border rounded-md w-full text-sm"
-                    required
-                />
-                <button type="submit" className="p-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors">
-                    <Plus size={20} />
-                </button>
-              </div>
-          </form>
-          <h3 className="text-lg font-semibold mt-4 mb-2 text-gray-700">収入入力</h3>
-          <form onSubmit={handleAddIncome} className="flex flex-col space-y-2">
-              <div className="flex items-center space-x-2">
-                <input
-                    type="number"
-                    value={newIncome.amount}
-                    onChange={(e) => setNewIncome({ ...newIncome, amount: e.target.value })}
-                    placeholder="金額"
-                    className="p-2 border rounded-md w-full text-sm"
-                    required
-                />
-                <button type="submit" className="p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
-                    <Plus size={20} />
-                </button>
-              </div>
-          </form>
+          {showFinanceInput && (
+            <div className="mt-4 space-y-4">
+              <h3 className="text-lg font-semibold mb-2 text-gray-700">支出入力</h3>
+              <form onSubmit={handleAddExpense} className="flex flex-col space-y-2">
+                  <input
+                      type="text"
+                      value={newExpense.category}
+                      onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
+                      placeholder="項目名（例：食費）"
+                      className="p-2 border rounded-md text-sm"
+                      required
+                  />
+                  <div className="flex items-center space-x-2">
+                    <input
+                        type="number"
+                        value={newExpense.amount}
+                        onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
+                        placeholder="金額"
+                        className="p-2 border rounded-md w-full text-sm"
+                        required
+                    />
+                    <button type="submit" className="p-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors">
+                        <Plus size={20} />
+                    </button>
+                  </div>
+              </form>
+              <h3 className="text-lg font-semibold mb-2 text-gray-700">収入入力</h3>
+              <form onSubmit={handleAddIncome} className="flex flex-col space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <input
+                        type="number"
+                        value={newIncome.amount}
+                        onChange={(e) => setNewIncome({ ...newIncome, amount: e.target.value })}
+                        placeholder="金額"
+                        className="p-2 border rounded-md w-full text-sm"
+                        required
+                    />
+                    <button type="submit" className="p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+                        <Plus size={20} />
+                    </button>
+                  </div>
+              </form>
+            </div>
+          )}
+          <div className="mt-auto pt-4 border-t">
+            <button
+              onClick={() => setShowFinanceInput(!showFinanceInput)}
+              className="w-full flex justify-center items-center text-blue-500 font-semibold text-base py-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <span>{showFinanceInput ? '入力欄を非表示' : '入力欄を表示'}</span>
+              {showFinanceInput ? <ChevronUp size={20} className="ml-2" /> : <ChevronDown size={20} className="ml-2" />}
+            </button>
+          </div>
         </div>
 
         {/* --- 投資管理 --- */}
@@ -561,16 +630,25 @@ export default function LifeManagementDashboard() {
             <div className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white p-4 rounded-lg mb-4">
                 <p className="text-base font-medium">総投資資産</p>
                 <p className="text-3xl font-bold">{formatCurrency(investmentData.totalAssets)}</p>
-                <p className="text-base flex items-center"><ArrowUp className="w-4 h-4"/>+{formatCurrency(investmentData.dailyChange)} (+{investmentData.dailyChangePercent}%)</p>
+                <p className={`text-base flex items-center ${investmentData.dailyChange > 0 ? 'text-green-200' : 'text-red-200'}`}>
+                    {investmentData.dailyChange > 0 ? <ArrowUp className="w-4 h-4 mr-1"/> : <ArrowDown className="w-4 h-4 mr-1"/>}
+                    {formatCurrency(Math.abs(investmentData.dailyChange))} ({investmentData.dailyChangePercent > 0 ? '+' : ''}{investmentData.dailyChangePercent}%)
+                </p>
             </div>
             
             {/* タブ切り替え */}
             <div className="flex space-x-2 mb-4">
                 <button 
+                    onClick={() => setActiveInvestmentTab('summary')}
+                    className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${activeInvestmentTab === 'summary' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                >
+                    概要
+                </button>
+                <button 
                     onClick={() => setActiveInvestmentTab('stocks')}
                     className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${activeInvestmentTab === 'stocks' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                 >
-                    株式
+                    個別株
                 </button>
                 <button 
                     onClick={() => setActiveInvestmentTab('investmentTrusts')}
@@ -580,6 +658,15 @@ export default function LifeManagementDashboard() {
                 </button>
             </div>
 
+            {/* サマリー（円グラフ） */}
+            {activeInvestmentTab === 'summary' && (
+                <div className="mt-4">
+                    <div className="w-full h-48 flex justify-center items-center">
+                        <Pie data={investmentPortfolioData} options={pieOptions} />
+                    </div>
+                </div>
+            )}
+
             {/* 株式リスト */}
             {activeInvestmentTab === 'stocks' && (
                 <>
@@ -588,7 +675,12 @@ export default function LifeManagementDashboard() {
                         {investmentData.stocks.map(stock => (
                             <div key={stock.symbol} className="flex justify-between items-center text-sm">
                                 <span>{stock.symbol} {stock.name}</span>
-                                <span className={stock.change > 0 ? 'text-green-600' : 'text-red-600'}>{stock.change > 0 ? '+' : ''}{stock.change}%</span>
+                                <div className="text-right">
+                                  <span className="font-semibold">{formatStockPrice(stock.symbol, stock.price)}</span>
+                                  <div className={stock.dailyChangePercent > 0 ? 'text-green-600' : 'text-red-600'}>
+                                    {stock.dailyChangePercent > 0 ? '+' : ''}{stock.dailyChangePercent}% ({stock.dailyChange > 0 ? '+' : ''}{formatStockPrice(stock.symbol, stock.dailyChange)})
+                                  </div>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -616,7 +708,12 @@ export default function LifeManagementDashboard() {
                         {investmentData.investmentTrusts.map((fund, index) => (
                             <div key={index} className="flex justify-between items-center text-sm">
                                 <span>{fund.name}</span>
-                                <span className={fund.change > 0 ? 'text-green-600' : 'text-red-600'}>{fund.change > 0 ? '+' : ''}{fund.change}%</span>
+                                <div className="text-right">
+                                  <span className="font-semibold">{formatCurrency(fund.value)}</span>
+                                  <div className={fund.dailyChangePercent > 0 ? 'text-green-600' : 'text-red-600'}>
+                                    {fund.dailyChangePercent > 0 ? '+' : ''}{fund.dailyChangePercent}% ({fund.dailyChange > 0 ? '+' : ''}{formatCurrency(fund.dailyChange)})
+                                  </div>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -674,7 +771,7 @@ export default function LifeManagementDashboard() {
         {/* --- 読書管理 --- */}
         <div key="reading" className="bg-white rounded-2xl p-6 shadow-lg border flex flex-col">
             <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center"><Book className="mr-2 text-indigo-500"/>最近の読書メモ</h2>
-            <div className="space-y-4 overflow-y-auto max-h-56 pr-2 mb-4">
+            <div className="space-y-4 overflow-y-auto flex-grow pr-2 mb-4">
                 {readingData.recentBooks.map(book => (
                     <div key={book.id} className="p-3 bg-gray-50 rounded-lg">
                         <h3 className="text-base font-bold text-gray-800">{book.title}</h3>
@@ -689,44 +786,55 @@ export default function LifeManagementDashboard() {
                     </div>
                 ))}
             </div>
-            <form onSubmit={handleAddReading} className="flex flex-col space-y-2">
-                <input
-                    type="text"
-                    value={newReading.title}
-                    onChange={(e) => setNewReading({ ...newReading, title: e.target.value })}
-                    placeholder="本のタイトル"
-                    className="p-2 border rounded-md text-sm"
-                    required
-                />
-                <input
-                    type="text"
-                    value={newReading.author}
-                    onChange={(e) => setNewReading({ ...newReading, author: e.target.value })}
-                    placeholder="著者"
-                    className="p-2 border rounded-md text-sm"
-                    required
-                />
-                <textarea
-                    value={newReading.notes}
-                    onChange={(e) => setNewReading({ ...newReading, notes: e.target.value })}
-                    placeholder="メモ"
-                    className="p-2 border rounded-md text-sm"
-                />
-                <div className="flex items-center space-x-2">
-                    <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={newReading.progress}
-                        onChange={(e) => setNewReading({ ...newReading, progress: parseInt(e.target.value, 10) })}
-                        className="w-full"
-                    />
-                    <span className="text-sm">{newReading.progress}%</span>
-                    <button type="submit" className="p-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-colors">
-                        <Plus size={20} />
-                    </button>
-                </div>
-            </form>
+            {showReadingInput && (
+              <form onSubmit={handleAddReading} className="flex flex-col space-y-2 mt-4">
+                  <input
+                      type="text"
+                      value={newReading.title}
+                      onChange={(e) => setNewReading({ ...newReading, title: e.target.value })}
+                      placeholder="本のタイトル"
+                      className="p-2 border rounded-md text-sm"
+                      required
+                  />
+                  <input
+                      type="text"
+                      value={newReading.author}
+                      onChange={(e) => setNewReading({ ...newReading, author: e.target.value })}
+                      placeholder="著者"
+                      className="p-2 border rounded-md text-sm"
+                      required
+                  />
+                  <textarea
+                      value={newReading.notes}
+                      onChange={(e) => setNewReading({ ...newReading, notes: e.target.value })}
+                      placeholder="メモ"
+                      className="p-2 border rounded-md text-sm"
+                  />
+                  <div className="flex items-center space-x-2">
+                      <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={newReading.progress}
+                          onChange={(e) => setNewReading({ ...newReading, progress: parseInt(e.target.value, 10) })}
+                          className="w-full"
+                      />
+                      <span className="text-sm">{newReading.progress}%</span>
+                      <button type="submit" className="p-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-colors">
+                          <Plus size={20} />
+                      </button>
+                  </div>
+              </form>
+            )}
+            <div className="mt-auto pt-4 border-t">
+              <button
+                onClick={() => setShowReadingInput(!showReadingInput)}
+                className="w-full flex justify-center items-center text-indigo-500 font-semibold text-base py-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <span>{showReadingInput ? '入力欄を非表示' : '入力欄を表示'}</span>
+                {showReadingInput ? <ChevronUp size={20} className="ml-2" /> : <ChevronDown size={20} className="ml-2" />}
+              </button>
+            </div>
         </div>
 
         {/* --- スティッキー・メモ --- */}
@@ -769,7 +877,7 @@ export default function LifeManagementDashboard() {
                     </div>
                 ))}
             </div>
-            <div className="mt-4 flex">
+            <div className="flex mt-auto">
                 <input 
                     type="text" 
                     className="flex-grow rounded-full py-2 px-4 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-base" 
